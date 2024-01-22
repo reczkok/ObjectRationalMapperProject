@@ -2,8 +2,8 @@
 
 namespace ObjectRationalMapper.DataClass;
 
-[Tablename("test")]
-public class TestClass
+[Tablename("test5")]
+public class TestClass2
 {
     [Field("id", typeof(int))]
     public int Id { get; set; }

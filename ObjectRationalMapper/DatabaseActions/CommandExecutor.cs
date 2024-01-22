@@ -24,4 +24,14 @@ public static class CommandExecutor
         reader.Close();
         return result;
     }
+    
+    public static void ExecuteInsert(string query = "")
+    {
+        var session = Session.GetInstance();
+        var connection = session.GetConnection();
+        var command = connection?.CreateCommand();
+        if (command == null) return;
+        command.CommandText = query;
+        command.ExecuteNonQuery();
+    }
 }

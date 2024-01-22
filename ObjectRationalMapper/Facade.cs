@@ -12,4 +12,9 @@ public class Facade
     {
         return DatabaseActions.CommandExecutor.ExecuteSelect(query);
     }
+    
+    public void ExecuteInsert(string query = "")
+    {
+        DatabaseActions.CommandExecutor.ExecuteInsert(query);
+    }
 }
