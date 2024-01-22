@@ -43,7 +43,8 @@ public static class CustomClassMapper<T>
                 return $"{left} {GetBinaryOperator(binaryExpression.NodeType)} {right}";
             }
             case MemberExpression memberExpression:
-                return memberExpression.Member.Name;
+                var fieldAttribute = memberExpression.Member.GetCustomAttribute<FieldAttribute>();
+                return fieldAttribute?.Name ?? memberExpression.Member.Name;
             case ConstantExpression constantExpression:
                 return constantExpression.Value?.ToString() ?? string.Empty;
             case UnaryExpression unaryExpression:
