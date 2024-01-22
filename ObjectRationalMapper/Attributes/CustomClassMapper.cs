@@ -5,13 +5,13 @@ namespace ObjectRationalMapper.Attributes;
 
 public static class CustomClassMapper<T>
 {
-    public static string GetTableName()
+    public static TablenameAttribute? GetTableAttribute()
     {
         var type = typeof(T);
-        return type.GetCustomAttribute<TablenameAttribute>()?.Name ?? type.Name;
+        return type.GetCustomAttribute<TablenameAttribute>();
     }
 
-    public static FieldAttribute?[] GetFieldNames()
+    public static FieldAttribute?[] GetFieldAttributes()
     {
         var type = typeof(T);
         return type.GetProperties().Select(property => property.GetCustomAttribute<FieldAttribute>()).ToArray();
