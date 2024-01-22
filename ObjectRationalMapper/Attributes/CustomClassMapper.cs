@@ -18,8 +18,17 @@ public static class CustomClassMapper<T>
         }
     }
     
-    public static string GetBinaryOperator(ExpressionType expressionType)
+    public static string GetBinaryOperator(ExpressionType expressionType, BinaryExpression expression)
     {
+        if(expression.Left is MemberExpression memberExpression)
+        {
+            var fieldAttribute = memberExpression.Member.GetCustomAttribute<FieldAttribute>();
+            if (fieldAttribute?.Type == typeof(string))
+            {
+                return GetStringBinaryOperator(expressionType);
+            }
+        }
+        
         return expressionType switch
         {
             ExpressionType.Equal => "=",
@@ -32,6 +41,16 @@ public static class CustomClassMapper<T>
         };
     }
 
+    private static string GetStringBinaryOperator(ExpressionType expressionType)
+    {
+        return expressionType switch
+        {
+            ExpressionType.Equal => "LIKE",
+            ExpressionType.NotEqual => "NOT LIKE",
+            _ => throw new ArgumentException("Invalid expression")
+        };
+    }
+
     public static string Visit(Expression expression)
     {
         switch (expression)
@@ -40,12 +59,16 @@ public static class CustomClassMapper<T>
             {
                 var left = Visit(binaryExpression.Left);
                 var right = Visit(binaryExpression.Right);
-                return $"{left} {GetBinaryOperator(binaryExpression.NodeType)} {right}";
+                return $"{left} {GetBinaryOperator(binaryExpression.NodeType, binaryExpression)} {right}";
             }
             case MemberExpression memberExpression:
                 var fieldAttribute = memberExpression.Member.GetCustomAttribute<FieldAttribute>();
                 return fieldAttribute?.Name ?? memberExpression.Member.Name;
             case ConstantExpression constantExpression:
+                if (constantExpression.Value is string)
+                {
+                    return $"'{constantExpression.Value}'";
+                }
                 return constantExpression.Value?.ToString() ?? string.Empty;
             case UnaryExpression unaryExpression:
                 return Visit(unaryExpression.Operand);
