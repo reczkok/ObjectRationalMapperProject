@@ -11,15 +11,38 @@ namespace ObjectRationalMapper.DatabaseQuery
     public class InsertBuilder<T> : IInsertBuilder<T>
     {
         private string _query = string.Empty;
+        private List<string> _selectedAttributes;
 
         public IInsertBuilder<T> Insert()
         {
             var type = typeof(T);
             var tableName = GetTableName(type);
             CreateIfNotExists();
-            
+
             var query = $"INSERT INTO {tableName}";
             _query = query;
+            return this;
+        }
+
+        public IInsertBuilder<T> Attributes(params Expression<Func<T, object>>[] attributes)
+        {
+            if (string.IsNullOrEmpty(_query))
+            {
+                throw new InvalidOperationException("Insert must be called before Values");
+            }
+
+            if (attributes == null || attributes.Length == 0)
+            {
+                return this;
+            }
+
+            _selectedAttributes = new List<string>();
+
+            foreach (var attribute in attributes)
+            {
+                _selectedAttributes.Add(CustomClassMapper<T>.GetPropertyName(attribute));
+            }
+
             return this;
         }
 
@@ -30,16 +53,31 @@ namespace ObjectRationalMapper.DatabaseQuery
                 throw new InvalidOperationException("Insert must be called before Values");
             }
 
-            var propertyNames = typeof(T).GetProperties()
-                .Where(prop => prop.GetCustomAttribute<FieldAttribute>() != null)
-                .Select(prop => prop.Name);
+            IEnumerable<string> propertyNames;
+            IEnumerable<string> propertyValues;
 
-            var values = string.Join(", ", propertyNames.Select(propName => $"'{GetPropertyStringValue(entity, propName)}'"));
+            if (_selectedAttributes != null && _selectedAttributes.Any())
+            {
+                propertyNames = _selectedAttributes;
+                propertyValues = _selectedAttributes.Select(propName => GetPropertyStringValue(entity, propName));
+            }
+            else
+            {
+                propertyNames = typeof(T).GetProperties()
+                    .Where(prop => prop.GetCustomAttribute<FieldAttribute>() != null)
+                    .Select(prop => prop.Name);
 
-            var query = $"{_query} VALUES ({values})";
+                propertyValues = propertyNames.Select(propName => GetPropertyStringValue(entity, propName));
+            }
+
+            var values = string.Join(", ", propertyValues.Select(value => $"'{value}'"));
+            var columns = string.Join(", ", propertyNames);
+
+            var query = $"{_query} ({columns}) VALUES ({values})";
             _query = query;
             return this;
         }
+
 
         public string ToCommand()
         {
@@ -51,7 +89,7 @@ namespace ObjectRationalMapper.DatabaseQuery
             var connection = Session.GetInstance().GetConnection();
             var type = typeof(T);
             var tableName = GetTableName(type);
-            
+
             if (!TableExists(connection, tableName))
             {
                 var createTableQuery = GenerateCreateTableQuery<T>();
@@ -61,7 +99,7 @@ namespace ObjectRationalMapper.DatabaseQuery
                 }
             }
         }
-        
+
         private static bool TableExists(MySqlConnection connection, string tableName)
         {
             using (MySqlCommand cmd = new MySqlCommand($"SHOW TABLES LIKE '{tableName}'", connection))
@@ -93,10 +131,14 @@ namespace ObjectRationalMapper.DatabaseQuery
         {
             return propertyType switch
             {
-                Type t when t == typeof(int) => "INT", 
+                Type t when t == typeof(int) => "INT",
                 Type t when t == typeof(int) => "INT",
                 Type t when t == typeof(string) => "VARCHAR(255)",
                 Type t when t == typeof(double) => "DOUBLE",
+                Type t when t == typeof(DateTime) => "DATETIME",
+                Type t when t == typeof(bool) => "BOOLEAN",
+                Type t when t == typeof(byte) => "TINYINT",
+                Type t when t == typeof(char) => "CHAR",
                 _ => throw new NotSupportedException($"Type {propertyType.Name} is not supported"),
             };
         }
@@ -108,6 +150,7 @@ namespace ObjectRationalMapper.DatabaseQuery
 
         private string GetPropertyStringValue(T entity, string propertyName)
         {
+            propertyName = char.ToUpper(propertyName[0]) + propertyName.Substring(1);
             var propertyValue = typeof(T).GetProperty(propertyName)?.GetValue(entity);
             return propertyValue?.ToString() ?? string.Empty;
         }
