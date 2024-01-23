@@ -17,4 +17,9 @@ public class Facade
     {
         DatabaseActions.CommandExecutor.ExecuteInsert(query);
     }
+    
+    public void ExecuteDelete(string query = "")
+    {
+        DatabaseActions.CommandExecutor.ExecuteDelete(query);
+    }
 }

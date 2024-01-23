@@ -3,7 +3,7 @@ using ObjectRationalMapper.DatabaseQuery;
 using ObjectRationalMapper.DataClass;
 
 Facade facade = new();
-facade.ConfigureMySql("localhost", "test", "root", "XXXX");
+facade.ConfigureMySql("localhost", "test", "root", "xxxx");
 
 var insertBuilder = new InsertBuilder<TestClass>();
 var entityToInsert = new TestClass
@@ -45,3 +45,14 @@ facade.ExecuteInsert(insert);
  var query = queryBuilder.Select(x => x.Name, x => x.Age, x => x.Height).Where(x => x.Id >= 0).Limit(10).ToCommand();
  var result = facade.ExecuteSelect(query);
  Console.WriteLine(result);
+ 
+//how delete works
+Console.WriteLine("Deleting all entries where age is less than 40");
+var deleteBuilder = new DeleteBuilder<TestClass>();
+var delete = deleteBuilder.Delete().Where(x => x.Age < 40).ToCommand();
+facade.ExecuteDelete(delete);
+
+Console.WriteLine("After delete");
+query = queryBuilder.Select(x => x.Name, x => x.Age, x => x.Height).Where(x => x.Id >= 0).Limit(10).ToCommand();
+result = facade.ExecuteSelect(query);
+Console.WriteLine(result);
