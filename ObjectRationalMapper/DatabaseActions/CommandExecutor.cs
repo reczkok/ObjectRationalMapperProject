@@ -44,4 +44,14 @@ public static class CommandExecutor
         command.CommandText = query;
         command.ExecuteNonQuery();
     }
+    
+    public static void ExecuteUpdate(string query = "")
+    {
+        var session = Session.GetInstance();
+        var connection = session.GetConnection();
+        var command = connection?.CreateCommand();
+        if (command == null) return;
+        command.CommandText = query;
+        command.ExecuteNonQuery();
+    }
 }

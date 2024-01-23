@@ -40,19 +40,30 @@ insert = insertBuilder.Insert().Attributes().Values(entityToInsert).ToCommand();
 
 facade.ExecuteInsert(insert);
 
-//how select works
+//how select works, to add addidtional conditions use .And or .Or
  var queryBuilder = new QueryBuilder<TestClass>();
  var query = queryBuilder.Select(x => x.Name, x => x.Age, x => x.Height).Where(x => x.Id >= 0).Limit(10).ToCommand();
  var result = facade.ExecuteSelect(query);
  Console.WriteLine(result);
  
-//how delete works
+//how delete works, to add addidtional conditions use .And or .Or
 Console.WriteLine("Deleting all entries where age is less than 40");
 var deleteBuilder = new DeleteBuilder<TestClass>();
 var delete = deleteBuilder.Delete().Where(x => x.Age < 40).ToCommand();
 facade.ExecuteDelete(delete);
 
 Console.WriteLine("After delete");
+query = queryBuilder.Select(x => x.Name, x => x.Age, x => x.Height).Where(x => x.Id >= 0).Limit(10).ToCommand();
+result = facade.ExecuteSelect(query);
+Console.WriteLine(result);
+
+//how update works, to add addidtional conditions use .And or .Or
+Console.WriteLine("Updating all entries where age is more than 40 to have age 99");
+var updateBuilder = new UpdateBuilder<TestClass>();
+var update = updateBuilder.Update().Set(x => x.Age == 99).Where(x => x.Age > 40).ToCommand();
+facade.ExecuteUpdate(update);
+
+Console.WriteLine("After update");
 query = queryBuilder.Select(x => x.Name, x => x.Age, x => x.Height).Where(x => x.Id >= 0).Limit(10).ToCommand();
 result = facade.ExecuteSelect(query);
 Console.WriteLine(result);

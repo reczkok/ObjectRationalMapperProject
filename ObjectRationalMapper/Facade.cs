@@ -22,4 +22,9 @@ public class Facade
     {
         DatabaseActions.CommandExecutor.ExecuteDelete(query);
     }
+    
+    public void ExecuteUpdate(string query = "")
+    {
+        DatabaseActions.CommandExecutor.ExecuteUpdate(query);
+    }
 }
