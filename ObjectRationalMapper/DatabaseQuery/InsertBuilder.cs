@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Linq;
@@ -134,7 +135,7 @@ namespace ObjectRationalMapper.DatabaseQuery
                 Type t when t == typeof(int) => "INT",
                 Type t when t == typeof(int) => "INT",
                 Type t when t == typeof(string) => "VARCHAR(255)",
-                Type t when t == typeof(double) => "DOUBLE",
+                Type t when t == typeof(double) => "DECIMAL(10, 2)",
                 Type t when t == typeof(DateTime) => "DATETIME",
                 Type t when t == typeof(bool) => "BOOLEAN",
                 Type t when t == typeof(byte) => "TINYINT",
@@ -152,6 +153,10 @@ namespace ObjectRationalMapper.DatabaseQuery
         {
             propertyName = char.ToUpper(propertyName[0]) + propertyName.Substring(1);
             var propertyValue = typeof(T).GetProperty(propertyName)?.GetValue(entity);
+            if (propertyValue is double doubleValue)
+            {
+                return doubleValue.ToString(CultureInfo.InvariantCulture);
+            }
             return propertyValue?.ToString() ?? string.Empty;
         }
     }
