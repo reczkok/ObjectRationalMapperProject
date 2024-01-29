@@ -17,6 +17,10 @@ public class ConnectionProvider : IConnectionProvider
         _connection?.Close();
         _connection = new MySqlConnection(connectionString);
         _connection.Open();
+        if (_connection.State != System.Data.ConnectionState.Open)
+        {
+            throw new InvalidOperationException("Connection could not be opened");
+        }
     }
 
     public void CloseConnection()
