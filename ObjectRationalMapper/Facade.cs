@@ -27,4 +27,9 @@ public class Facade
     {
         DatabaseActions.CommandExecutor.ExecuteUpdate(query);
     }
+    
+    public T[] ExtractObjects<T>(string query = "")
+    {
+        return DatabaseActions.ObjectExtractor<T>.ExtractObjects(query);
+    }
 }

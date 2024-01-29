@@ -7,12 +7,13 @@ namespace ObjectRationalMapper.DatabaseQuery;
 public class DeleteBuilder<T> : IDeleteBuilder<T>
 {
     private string _query = string.Empty;
+    private string _fallbackQuery = string.Empty;
     
     public IDeleteBuilder<T> Delete()
     {
-        var type = typeof(T);
-        var tableName = type.GetCustomAttribute<TablenameAttribute>()?.Name ?? type.Name;
+        var tableName = CustomClassMapper<T>.GetHierarchyTableName();
         var query = $"DELETE FROM {tableName}";
+        FallbackWhere();
         _query = query;
         return this;
     }
@@ -25,6 +26,7 @@ public class DeleteBuilder<T> : IDeleteBuilder<T>
         }
         var query = $"{_query} WHERE {CustomClassMapper<T>.Visit(expression.Body)}";
         _query = query;
+        _fallbackQuery = _fallbackQuery.Replace("WHERE", "AND");
         return this;
     }
 
@@ -50,8 +52,17 @@ public class DeleteBuilder<T> : IDeleteBuilder<T>
         return this;
     }
 
+    private void FallbackWhere()
+    {
+        var tableName = CustomClassMapper<T>.GetHierarchyTableName();
+        var discriminatorValue = CustomClassMapper<T>.GetDiscriminatorValue();
+        var discriminator = CustomClassMapper<T>.GetDiscriminator();
+        var query = $" WHERE {discriminator} = '{discriminatorValue}'";
+        _fallbackQuery = query;
+    }
+
     public string ToCommand()
     {
-        return _query;
+        return _query + _fallbackQuery;
     }
 }

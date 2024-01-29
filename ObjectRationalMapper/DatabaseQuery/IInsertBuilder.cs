@@ -10,5 +10,4 @@ public interface IInsertBuilder<T>
     IInsertBuilder<T> Attributes(params Expression<Func<T, object>>[] attributes);
     public IInsertBuilder<T> Values(T entity);
     public string ToCommand();
-    public void CreateIfNotExists();
 }

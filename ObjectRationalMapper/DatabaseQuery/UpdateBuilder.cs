@@ -7,13 +7,14 @@ namespace ObjectRationalMapper.DatabaseQuery;
 public class UpdateBuilder<T> : IUpdateBuilder<T>
 {
     private string _query = string.Empty;
+    private string _fallbackQuery = string.Empty;
     
     public IUpdateBuilder<T> Update()
     {
-        var type = typeof(T);
-        var tableName = type.GetCustomAttribute<TablenameAttribute>()?.Name ?? type.Name;
+        var tableName = CustomClassMapper<T>.GetHierarchyTableName();
         var query = $"UPDATE {tableName}";
         _query = query;
+        FallbackWhere();
         return this;
     }
 
@@ -36,6 +37,7 @@ public class UpdateBuilder<T> : IUpdateBuilder<T>
         }
         var query = $"{_query} WHERE {CustomClassMapper<T>.Visit(expression.Body)}";
         _query = query;
+        _fallbackQuery = _fallbackQuery.Replace("WHERE", "AND");
         return this;
     }
 
@@ -60,9 +62,18 @@ public class UpdateBuilder<T> : IUpdateBuilder<T>
         _query = query;
         return this;
     }
+    
+    private void FallbackWhere()
+    {
+        var tableName = CustomClassMapper<T>.GetHierarchyTableName();
+        var discriminatorValue = CustomClassMapper<T>.GetDiscriminatorValue();
+        var discriminator = CustomClassMapper<T>.GetDiscriminator();
+        var query = $" WHERE {discriminator} = '{discriminatorValue}'";
+        _fallbackQuery = query;
+    }
 
     public string ToCommand()
     {
-        return _query;
+        return _query + _fallbackQuery;
     }
 }

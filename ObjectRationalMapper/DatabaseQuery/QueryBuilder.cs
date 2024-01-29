@@ -7,13 +7,23 @@ namespace ObjectRationalMapper.DatabaseQuery;
 public class QueryBuilder<T> : IQueryBuilder<T>
 {
     private string _query = string.Empty;
+    private string _fallbackQuery = string.Empty;
     
     public IQueryBuilder<T> Select(params Expression<Func<T, object>>[] fields)
     {
-        var type = typeof(T);
-        var tableName = type.GetCustomAttribute<TablenameAttribute>()?.Name ?? type.Name;
+        var tableName = CustomClassMapper<T>.GetHierarchyTableName();
         var query = $"SELECT {string.Join(", ", fields.Select(CustomClassMapper<T>.GetPropertyName))} FROM {tableName}";
         _query = query;
+        FallbackWhere();
+        return this;
+    }
+
+    public IQueryBuilder<T> Select()
+    {
+        var tableName = CustomClassMapper<T>.GetHierarchyTableName();
+        var query = $"SELECT * FROM {tableName}";
+        _query = query;
+        FallbackWhere();
         return this;
     }
 
@@ -25,11 +35,15 @@ public class QueryBuilder<T> : IQueryBuilder<T>
         }
         var query = $"{_query} WHERE {CustomClassMapper<T>.Visit(condition.Body)}";
         _query = query;
+        _fallbackQuery = _fallbackQuery.Replace("WHERE", "AND");
         return this;
     }
 
     public IQueryBuilder<T> Limit(int limit)
     {
+        _query += _fallbackQuery;
+        _fallbackQuery = string.Empty;
+        
         if (string.IsNullOrEmpty(_query))
         {
             throw new InvalidOperationException("Select must be called before Limit");
@@ -63,6 +77,8 @@ public class QueryBuilder<T> : IQueryBuilder<T>
 
     public IQueryBuilder<T> OrderBy(Expression<Func<T, object>>[] fields)
     {
+        _query += _fallbackQuery;
+        _fallbackQuery = string.Empty;
         if (string.IsNullOrEmpty(_query))
         {
             throw new InvalidOperationException("Select must be called before OrderBy");
@@ -71,9 +87,18 @@ public class QueryBuilder<T> : IQueryBuilder<T>
         _query = query;
         return this;
     }
+    
+    private void FallbackWhere()
+    {
+        var tableName = CustomClassMapper<T>.GetHierarchyTableName();
+        var discriminatorValue = CustomClassMapper<T>.GetDiscriminatorValue();
+        var discriminator = CustomClassMapper<T>.GetDiscriminator();
+        var query = $" WHERE {discriminator} = '{discriminatorValue}'";
+        _fallbackQuery = query;
+    }
 
     public string ToCommand()
     {
-        return _query;
+        return _query + _fallbackQuery;
     }
 }

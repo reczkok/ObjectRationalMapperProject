@@ -2,11 +2,10 @@
 
 namespace ObjectRationalMapper.DataClass;
 
-[Tablename("test")]
+[Tablename("test", ChildClasses = new[] { typeof(TestInheritance) })]
+[Id("id")]
 public class TestClass
 {
-    [Field("id", typeof(int))]
-    public int Id { get; set; }
     [Field("name", typeof(string))]
     public string Name { get; set; }
     [Field("age", typeof(int))]

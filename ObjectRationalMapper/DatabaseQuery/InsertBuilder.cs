@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Linq;
 using MySql.Data.MySqlClient;
 using ObjectRationalMapper.Attributes;
+using ObjectRationalMapper.DatabaseActions;
 using ObjectRationalMapper.DatabaseConnection;
 
 namespace ObjectRationalMapper.DatabaseQuery
@@ -12,13 +13,12 @@ namespace ObjectRationalMapper.DatabaseQuery
     public class InsertBuilder<T> : IInsertBuilder<T>
     {
         private string _query = string.Empty;
-        private List<string> _selectedAttributes;
+        private List<MemberInfo> _selectedAttributes;
 
         public IInsertBuilder<T> Insert()
         {
-            var type = typeof(T);
-            var tableName = GetTableName(type);
-            CreateIfNotExists();
+            var tableName = CustomClassMapper<T>.GetHierarchyTableName();
+            TableGenerator<T>.GenerateIfNotExists();
 
             var query = $"INSERT INTO {tableName}";
             _query = query;
@@ -37,11 +37,11 @@ namespace ObjectRationalMapper.DatabaseQuery
                 return this;
             }
 
-            _selectedAttributes = new List<string>();
+            _selectedAttributes = new List<MemberInfo>();
 
             foreach (var attribute in attributes)
             {
-                _selectedAttributes.Add(CustomClassMapper<T>.GetPropertyName(attribute));
+                _selectedAttributes.Add(CustomClassMapper<T>.GetPropertyInfo(attribute));
             }
 
             return this;
@@ -54,26 +54,33 @@ namespace ObjectRationalMapper.DatabaseQuery
                 throw new InvalidOperationException("Insert must be called before Values");
             }
 
-            IEnumerable<string> propertyNames;
+            IEnumerable<MemberInfo> properties;
             IEnumerable<string> propertyValues;
 
             if (_selectedAttributes != null && _selectedAttributes.Any())
             {
-                propertyNames = _selectedAttributes;
-                propertyValues = _selectedAttributes.Select(propName => GetPropertyStringValue(entity, propName));
+                properties = _selectedAttributes;
+                propertyValues = _selectedAttributes.Select(prop => GetPropertyStringValue(entity, prop));
             }
             else
             {
-                propertyNames = typeof(T).GetProperties()
-                    .Where(prop => prop.GetCustomAttribute<FieldAttribute>() != null)
-                    .Select(prop => prop.Name);
+                properties = CustomClassMapper<T>.GetProperties();
 
-                propertyValues = propertyNames.Select(propName => GetPropertyStringValue(entity, propName));
+                propertyValues = properties.Select(prop => GetPropertyStringValue(entity, prop));
             }
+            
+            var propertyNames = properties.Select(prop => prop.GetCustomAttribute<FieldAttribute>()?.Name ?? prop.Name);
 
+            var discriminatorValue = CustomClassMapper<T>.GetDiscriminatorValue();
+            var discriminator = CustomClassMapper<T>.GetDiscriminator();
+            
+            
             var values = string.Join(", ", propertyValues.Select(value => $"'{value}'"));
             var columns = string.Join(", ", propertyNames);
-
+            
+            columns += $", {discriminator}";
+            values += $", '{discriminatorValue}'";
+            
             var query = $"{_query} ({columns}) VALUES ({values})";
             _query = query;
             return this;
@@ -84,78 +91,18 @@ namespace ObjectRationalMapper.DatabaseQuery
         {
             return _query;
         }
+        
 
-        public void CreateIfNotExists()
+        private string GetPropertyStringValue(T entity, MemberInfo prop)
         {
-            var connection = Session.GetInstance().GetConnection();
-            var type = typeof(T);
-            var tableName = GetTableName(type);
-
-            if (!TableExists(connection, tableName))
-            {
-                var createTableQuery = GenerateCreateTableQuery<T>();
-                using (MySqlCommand cmd = new MySqlCommand(createTableQuery, connection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-            }
-        }
-
-        private static bool TableExists(MySqlConnection connection, string tableName)
-        {
-            using (MySqlCommand cmd = new MySqlCommand($"SHOW TABLES LIKE '{tableName}'", connection))
-            {
-                using (MySqlDataReader reader = cmd.ExecuteReader())
-                {
-                    return reader.HasRows;
-                }
-            }
-        }
-
-        private string GenerateCreateTableQuery<TClass>()
-        {
-            var tableName = GetTableName(typeof(TClass));
-            var columns = typeof(TClass).GetProperties()
-                .Where(prop => prop.GetCustomAttribute<FieldAttribute>() != null)
-                .Select(prop =>
-                {
-                    var fieldName = prop.GetCustomAttribute<FieldAttribute>().Name ?? prop.Name;
-                    var fieldType = prop.GetCustomAttribute<FieldAttribute>().Type;
-                    var sqlType = MapToSqlType(fieldType ?? prop.PropertyType);
-                    return $"{fieldName} {sqlType}";
-                });
-
-            return $"CREATE TABLE {tableName} ({string.Join(", ", columns)});";
-        }
-
-        private string MapToSqlType(Type propertyType)
-        {
-            return propertyType switch
-            {
-                Type t when t == typeof(int) => "INT",
-                Type t when t == typeof(int) => "INT",
-                Type t when t == typeof(string) => "VARCHAR(255)",
-                Type t when t == typeof(double) => "DECIMAL(10, 2)",
-                Type t when t == typeof(DateTime) => "DATETIME",
-                Type t when t == typeof(bool) => "BOOLEAN",
-                Type t when t == typeof(byte) => "TINYINT",
-                Type t when t == typeof(char) => "CHAR",
-                _ => throw new NotSupportedException($"Type {propertyType.Name} is not supported"),
-            };
-        }
-
-        private string GetTableName(Type type)
-        {
-            return type.GetCustomAttribute<TablenameAttribute>()?.Name ?? type.Name;
-        }
-
-        private string GetPropertyStringValue(T entity, string propertyName)
-        {
-            propertyName = char.ToUpper(propertyName[0]) + propertyName.Substring(1);
-            var propertyValue = typeof(T).GetProperty(propertyName)?.GetValue(entity);
+            var propertyValue = typeof(T).GetProperty(prop.Name)?.GetValue(entity);
             if (propertyValue is double doubleValue)
             {
                 return doubleValue.ToString(CultureInfo.InvariantCulture);
+            }
+            if (propertyValue is DateTime dateTimeValue)
+            {
+                return dateTimeValue.ToString("yyyy-MM-dd HH:mm:ss");
             }
             return propertyValue?.ToString() ?? string.Empty;
         }

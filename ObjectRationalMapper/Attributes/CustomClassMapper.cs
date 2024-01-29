@@ -10,11 +10,62 @@ public static class CustomClassMapper<T>
         var type = typeof(T);
         return type.GetCustomAttribute<TablenameAttribute>();
     }
+    
+    public static string GetHierarchyTableName(Type? t = null)
+    {
+        var type = typeof(T);
+        if (t != null)
+        {
+            type = t;
+        }
+        var parent = type.GetCustomAttribute<TablenameAttribute>()!.ParentClass;
+        return parent == null ? type.GetCustomAttribute<TablenameAttribute>()!.Name : GetHierarchyTableName(parent);
+    }
 
     public static FieldAttribute?[] GetFieldAttributes()
     {
         var type = typeof(T);
-        return type.GetProperties().Select(property => property.GetCustomAttribute<FieldAttribute>()).ToArray();
+        return GetFieldAttributes(type);
+    }
+
+    public static string GetDiscriminator()
+    {
+        return "ORMPROJ_Discriminator";
+    }
+    
+    public static string GetDiscriminatorValue(Type? t = null)
+    {
+        var type = typeof(T);
+        if (t != null)
+        {
+            type = t;
+        }
+        var discriminator = type.GetCustomAttribute<TablenameAttribute>()?.Name ?? type.Name;
+        return discriminator;
+    }
+    
+    public static FieldAttribute?[] GetFieldAttributes(Type type)
+    {
+        if(type.GetCustomAttribute<TablenameAttribute>()?.ParentClass == null)
+        {
+            return type.GetProperties().Select(property => property.GetCustomAttribute<FieldAttribute>()).ToArray();
+        }
+        var parentClass = GetParentClass(type);
+        var parentClassAttributes = parentClass.GetProperties().Select(property => property.GetCustomAttribute<FieldAttribute>()).ToArray();
+        var thisClassAttributes = type.GetProperties().Select(property => property.GetCustomAttribute<FieldAttribute>()).ToArray();
+        var excludedAttributes = parentClassAttributes.Select(attribute => attribute?.Name).ToArray();
+        var thisClassAttributesWithoutParentClassAttributes = thisClassAttributes.Where(attribute => !excludedAttributes.Contains(attribute?.Name)).ToArray();
+        return thisClassAttributesWithoutParentClassAttributes;
+    }
+    
+    public static PropertyInfo[] GetProperties(Type t = null)
+    {
+        var type = typeof(T);
+        if (t != null)
+        {
+            type = t;
+        }
+        return type.GetProperties();
     }
 
     public static string GetPropertyName(Expression<Func<T, object>> expression)
@@ -30,16 +81,29 @@ public static class CustomClassMapper<T>
         }
     }
     
+    public static MemberInfo GetPropertyInfo(Expression<Func<T, object>> expression)
+    {
+        switch (expression.Body)
+        {
+            case MemberExpression memberExpression:
+                return memberExpression.Member;
+            case UnaryExpression unaryExpression:
+                return ((MemberExpression)unaryExpression.Operand).Member;
+            default:
+                throw new NotSupportedException($"Expression type {expression.NodeType} not supported");
+        }
+    }
+    
     public static string GetBinaryOperator(ExpressionType expressionType, BinaryExpression expression)
     {
-        if(expression.Left is MemberExpression memberExpression)
-        {
-            var fieldAttribute = memberExpression.Member.GetCustomAttribute<FieldAttribute>();
-            if (fieldAttribute?.Type == typeof(string))
-            {
-                return GetStringBinaryOperator(expressionType);
-            }
-        }
+        // if(expression.Left is MemberExpression memberExpression)
+        // {
+        //     var fieldAttribute = memberExpression.Member.GetCustomAttribute<FieldAttribute>();
+        //     if (fieldAttribute?.Type == typeof(string))
+        //     {
+        //         return GetStringBinaryOperator(expressionType);
+        //     }
+        // }
         
         return expressionType switch
         {
@@ -88,4 +152,15 @@ public static class CustomClassMapper<T>
                 throw new NotSupportedException($"Expression type {expression.NodeType} not supported");
         }
     }
+    
+    public static Type GetParentClass(Type type)
+    {
+        var parentClass = type.GetCustomAttribute<TablenameAttribute>()?.ParentClass;
+        if (parentClass != null)
+        {
+            return parentClass;
+        }
+        return type;
+    }
+    
 }
