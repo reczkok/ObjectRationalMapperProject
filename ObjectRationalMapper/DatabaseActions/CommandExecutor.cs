@@ -6,6 +6,10 @@ namespace ObjectRationalMapper.DatabaseActions;
 
 public static class CommandExecutor
 {
+    /*
+     * This is a CommandExecutor class, which is a static class.
+     * It is used to execute created commands on the database.
+     */
     public static string ExecuteSelect(string query = "")
     {
         var session = Session.GetInstance();

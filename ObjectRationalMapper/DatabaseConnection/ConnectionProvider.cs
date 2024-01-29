@@ -4,6 +4,11 @@ namespace ObjectRationalMapper.DatabaseConnection;
 
 public class ConnectionProvider : IConnectionProvider
 {
+    /*
+     * The ConnectionProvider class is responsible for managing a connection to a MySQL database. It implements the 
+     * IConnectionProvider interface, providing the methods to get, configure, and close a database connection.
+     * This implementation uses MySqlConnection from the MySql.Data.MySqlClient library.
+     */
     private MySqlConnection _connection;
 
     public MySqlConnection GetConnection()
