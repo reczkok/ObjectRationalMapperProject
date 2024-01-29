@@ -7,79 +7,95 @@ using Attributes;
 
 public static class TableGenerator<T>
 {
+    // Retrieves the base class for the generic type T.
     private static Type _getBaseClass()
     {
         var type = typeof(T);
+        // Assumes a custom class mapper is used to identify the base class of T.
         var baseType = CustomClassMapper<T>.GetParentClass(type);
         return baseType;
     }
 
+    // Gets the ID attribute of a given class member, defaulting to "id" if not explicitly defined.
     private static string _getBaseClassId(MemberInfo t)
     {
-        var id = t.GetCustomAttribute<IdAttribute>();
-        return id?.Name ?? "id";
+        var id = t.GetCustomAttribute<IdAttribute>(); // Retrieves the IdAttribute of the member.
+        return id?.Name ?? "id"; // Returns the name specified in the IdAttribute or "id" if not specified.
     }
 
+    // Constructs a string representation of fields for a SQL CREATE TABLE statement.
     private static string _getFieldsAsString(Type t)
     {
-        var fields = CustomClassMapper<T>.GetFieldAttributes(t);
+        var fields = CustomClassMapper<T>.GetFieldAttributes(t); // Retrieves the fields defined in the class.
+        // Joins the fields into a single string, each field is formatted as 'field_name field_type'.
         var fieldsAsString = string.Join(", ", fields.Select(field => $"{field?.Name} {MapToSqlType(field?.Type ?? typeof(string))}"));
         return fieldsAsString;
     }
     
+    // Retrieves an array of field attributes for a given type T.
     private static FieldAttribute[]? _getFields(Type t)
     {
+        // Utilizes a custom class mapper to extract field attributes from the type.
         var fields = CustomClassMapper<T>.GetFieldAttributes(t);
         return fields;
     }
 
+    // Gets child tables' types based on the TablenameAttribute of a class member.
     private static Type[]? _getChildrenTables(MemberInfo t)
     {
-        var children = t.GetCustomAttribute<TablenameAttribute>();
-        var childrenTables = children?.ChildClasses;
+        var children = t.GetCustomAttribute<TablenameAttribute>(); // Retrieves the TablenameAttribute.
+        var childrenTables = children?.ChildClasses; // Gets the child classes defined in the attribute.
         return childrenTables;
     }
 
+    // Retrieves all child class types in a recursive manner.
     private static Type[]? _getAllChildrenTables(MemberInfo t)
     {
         var children = _getChildrenTables(t);
-        var allChildren = new List<Type>();
-        var queue = new Queue<Type>();
+        var allChildren = new List<Type>(); // List to hold all discovered child types.
+        var queue = new Queue<Type>(); // Queue for breadth-first traversal of child types.
+
         if (children != null)
         {
             foreach (var child in children)
             {
-                queue.Enqueue(child);
+                queue.Enqueue(child); // Enqueue initial set of children.
             }
         }
+
         while (queue.Count > 0)
         {
-            var child = queue.Dequeue();
-            allChildren.Add(child);
-            var childChildren = _getChildrenTables(child);
+            var child = queue.Dequeue(); // Dequeue a child type.
+            allChildren.Add(child); // Add it to the list of all child types.
+            var childChildren = _getChildrenTables(child); // Get children of the dequeued child.
+
             if (childChildren != null)
             {
                 foreach (var childChild in childChildren)
                 {
-                    queue.Enqueue(childChild);
+                    queue.Enqueue(childChild); // Enqueue the children of the child.
                 }
             }
         }
-        return allChildren.ToArray();
+
+        return allChildren.ToArray(); // Return all discovered child types.
     }
 
+    // Generates a SQL CREATE TABLE query based on the type T and its hierarchy.
     public static string GenerateTableQuery()
     {
-        var baseType = _getBaseClass();
-        var baseTypeName = baseType.GetCustomAttribute<TablenameAttribute>()?.Name ?? baseType.Name;
-        var baseClassId = _getBaseClassId(baseType);
-        var discriminator = "ORMPROJ_Discriminator VARCHAR(255) NOT NULL";
-        var allChildren = _getAllChildrenTables(baseType);
-        
-        // we will use a string builder to build the query
-        var query = new StringBuilder();
+        var baseType = _getBaseClass(); // Gets the base class of T.
+        var baseTypeName = baseType.GetCustomAttribute<TablenameAttribute>()?.Name ?? baseType.Name; // Gets the table name.
+        var baseClassId = _getBaseClassId(baseType); // Gets the ID field name.
+        var discriminator = "ORMPROJ_Discriminator VARCHAR(255) NOT NULL"; // Adds a discriminator field for ORM.
+        var allChildren = _getAllChildrenTables(baseType); // Gets all child types of the base class.
+
+        var query = new StringBuilder(); // StringBuilder to construct the query.
+        // Start of the CREATE TABLE query.
         query.Append($"CREATE TABLE IF NOT EXISTS {baseTypeName} ({baseClassId} INT NOT NULL AUTO_INCREMENT, {discriminator}, ");
-        query.Append(_getFieldsAsString(baseType));
+        query.Append(_getFieldsAsString(baseType)); // Appends fields of the base type.
+
+        // Appends fields of all child types.
         if (allChildren != null)
         {
             foreach (var child in allChildren)
@@ -88,16 +104,19 @@ public static class TableGenerator<T>
                 query.Append($", {childFields} ");
             }
         }
+
+        // Completes the CREATE TABLE query.
         query.Append($", PRIMARY KEY ({baseClassId})");
         query.Append(");");
-        return query.ToString();
+
+        return query.ToString(); // Returns the final query string.
     }
     
+    // Maps C# types to their corresponding SQL types.
     private static string MapToSqlType(Type propertyType)
     {
         return propertyType switch
         {
-            Type t when t == typeof(int) => "INT",
             Type t when t == typeof(int) => "INT",
             Type t when t == typeof(string) => "VARCHAR(255)",
             Type t when t == typeof(double) => "DECIMAL(10, 2)",
@@ -109,15 +128,17 @@ public static class TableGenerator<T>
         };
     }
     
+    // Checks if a table for type T exists in the database, and if not, generates one.
     public static void GenerateIfNotExists()
     {
-        var tableName = CustomClassMapper<T>.GetHierarchyTableName();
-        var query = $"SHOW TABLES LIKE '{tableName}'";
-        var res = CommandExecutor.ExecuteTableExists(query);
+        var tableName = CustomClassMapper<T>.GetHierarchyTableName(); // Gets the hierarchy table name for T.
+        var query = $"SHOW TABLES LIKE '{tableName}'"; // Query to check if the table exists.
+        var res = CommandExecutor.ExecuteTableExists(query); // Executes the query to check existence.
+        
         if (!res)
         {
-            var createTableQuery = GenerateTableQuery();
-            CommandExecutor.ExecuteCreateTable(createTableQuery);
+            var createTableQuery = GenerateTableQuery(); // Generates the CREATE TABLE query if the table doesn't exist.
+            CommandExecutor.ExecuteCreateTable(createTableQuery); // Executes the CREATE TABLE query.
         }
     }
 }
