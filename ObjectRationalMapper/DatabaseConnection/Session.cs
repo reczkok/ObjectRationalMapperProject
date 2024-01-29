@@ -16,6 +16,10 @@ public sealed class Session
     
     public MySqlConnection? GetConnection()
     {
+        if (_connectionProvider == null)
+        {
+            throw new InvalidOperationException("Connection must be configured before use");
+        }
         return _connectionProvider?.GetConnection();
     }
     
