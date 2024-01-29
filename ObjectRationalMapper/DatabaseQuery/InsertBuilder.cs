@@ -104,6 +104,10 @@ namespace ObjectRationalMapper.DatabaseQuery
             {
                 return dateTimeValue.ToString("yyyy-MM-dd HH:mm:ss");
             }
+            if (propertyValue is bool boolValue)
+            {
+                return boolValue ? "1" : "0";
+            }
             return propertyValue?.ToString() ?? string.Empty;
         }
     }
