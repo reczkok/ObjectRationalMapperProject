@@ -1,4 +1,7 @@
-﻿namespace ObjectRationalMapper;
+﻿using System.Linq.Expressions;
+using ObjectRationalMapper.DatabaseQuery;
+
+namespace ObjectRationalMapper;
 
 public class Facade
 {
@@ -31,5 +34,25 @@ public class Facade
     public T[] ExtractObjects<T>(string query = "")
     {
         return DatabaseActions.ObjectExtractor<T>.ExtractObjects(query);
+    }
+    
+    public IQueryBuilder<T> GetSelectBuilder<T>()
+    {
+        return new DatabaseQuery.QueryBuilder<T>();
+    }
+    
+    public IInsertBuilder<T> GetInsertBuilder<T>()
+    {
+        return new DatabaseQuery.InsertBuilder<T>();
+    }
+    
+    public IDeleteBuilder<T> GetDeleteBuilder<T>()
+    {
+        return new DatabaseQuery.DeleteBuilder<T>();
+    }
+    
+    public IUpdateBuilder<T> GetUpdateBuilder<T>()
+    {
+        return new DatabaseQuery.UpdateBuilder<T>();
     }
 }
