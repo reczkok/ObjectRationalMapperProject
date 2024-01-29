@@ -1,4 +1,8 @@
 ﻿using System.Reflection;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 using ObjectRationalMapper;
 using ObjectRationalMapper.Attributes;
 using ObjectRationalMapper.DatabaseActions;
@@ -91,9 +95,56 @@ var entityToInsert2 = new TestInheritance
     TestInheritanceName = "I WORK OMG"
 };
 
-var select = new QueryBuilder<TestInheritance>().Select().Where(x => x.Height >= 33.2).ToCommand();
+/*
+var insertBuilder = new InsertBuilder<TestInheritance>();
+var insert2 = insertBuilder.Insert().Values(entityToInsert2).ToCommand();
+facade.ExecuteInsert(insert2);
+
+var select = new QueryBuilder<TestInheritance>().Select().Where(x => x.Height >= 20.2).ToCommand();
 var res = facade.ExtractObjects<TestInheritance>(select);
 foreach (var testInheritance in res)
 {
     Console.WriteLine(testInheritance.Name);
+}*/
+
+facade.ExecuteDropTable<Vehicle>();
+
+var trainData = JsonConvert.DeserializeObject<Train[]>(File.ReadAllText(@"..\..\..\Data\trains.json"));
+var trainInsertBuilder = new InsertBuilder<Train>();
+
+foreach (var train in trainData!) {
+    var trainInsertQuery = trainInsertBuilder.Insert().Values(train).ToCommand();
+    facade.ExecuteInsert(trainInsertQuery);
+}
+
+var carData = JsonConvert.DeserializeObject<Car[]>(File.ReadAllText(@"..\..\..\Data\cars.json"));
+var carInsertBuilder = new InsertBuilder<Car>();
+
+foreach (var car in carData!) {
+    var carInsertQuery = carInsertBuilder.Insert().Values(car).ToCommand();
+    facade.ExecuteInsert(carInsertQuery);
+}
+
+var planeData = JsonConvert.DeserializeObject<Plane[]>(File.ReadAllText(@"..\..\..\Data\planes.json"));
+var planeInsertBuilder = new InsertBuilder<Plane>();
+
+foreach (var plane in planeData!) {
+    var planeInsertQuery = planeInsertBuilder.Insert().Values(plane).ToCommand();
+    facade.ExecuteInsert(planeInsertQuery);
+}
+
+var busData = JsonConvert.DeserializeObject<Bus[]>(File.ReadAllText(@"..\..\..\Data\buses.json"));
+var busInsertBuilder = new InsertBuilder<Bus>();
+
+foreach (var bus in busData!) {
+    var busInsertQuery = busInsertBuilder.Insert().Values(bus).ToCommand();
+    facade.ExecuteInsert(busInsertQuery);
+}
+
+var vehicleSelect = new QueryBuilder<Car>().Select().Where(x => x.CarEngineType == EngineType.Diesel).ToCommand();
+var vehicleRes = facade.ExtractObjects<Car>(vehicleSelect);
+Console.WriteLine("------------------------------------------");
+foreach (var vehicle in vehicleRes)
+{
+    Console.WriteLine($"{vehicle.Name}: {vehicle.CarEngineType}");
 }

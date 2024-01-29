@@ -1,0 +1,92 @@
+﻿[
+  {
+    "id": 1,
+    "name": "LRL 2000",
+    "speed": 120,
+    "capacity": 300,
+    "fare": 25.50,
+    "noOfCars": 6,
+    "trainTransportRange": "National"
+  },
+  {
+    "id": 2,
+    "name": "Newag 2022",
+    "speed": 90,
+    "capacity": 200,
+    "fare": 15.75,
+    "noOfCars": 4,
+    "trainTransportRange": "Regional"
+  },
+  {
+    "id": 3,
+    "name": "Stadler Turbo",
+    "speed": 110,
+    "capacity": 250,
+    "fare": 20.00,
+    "noOfCars": 5,
+    "trainTransportRange": "National"
+  },
+  {
+    "id": 4,
+    "name": "Newag Sprinter",
+    "speed": 100,
+    "capacity": 180,
+    "fare": 18.25,
+    "noOfCars": 4,
+    "trainTransportRange": "Regional"
+  },
+  {
+    "id": 5,
+    "name": "Newag Voyager",
+    "speed": 80,
+    "capacity": 150,
+    "fare": 12.50,
+    "noOfCars": 3,
+    "trainTransportRange": "Local"
+  },
+  {
+    "id": 6,
+    "name": "Stadler Explorer",
+    "speed": 150,
+    "capacity": 400,
+    "fare": 30.00,
+    "noOfCars": 8,
+    "trainTransportRange": "International"
+  },
+  {
+    "id": 7,
+    "name": "Stadler 3000",
+    "speed": 85,
+    "capacity": 220,
+    "fare": 16.50,
+    "noOfCars": 4,
+    "trainTransportRange": "Regional"
+  },
+  {
+    "id": 8,
+    "name": "Alstom 2023",
+    "speed": 95,
+    "capacity": 180,
+    "fare": 14.75,
+    "noOfCars": 3,
+    "trainTransportRange": "Local"
+  },
+  {
+    "id": 9,
+    "name": "Alstom Eurostar",
+    "speed": 130,
+    "capacity": 350,
+    "fare": 27.50,
+    "noOfCars": 7,
+    "trainTransportRange": "International"
+  },
+  {
+    "id": 10,
+    "name": "LRL 4000",
+    "speed": 100,
+    "capacity": 220,
+    "fare": 17.25,
+    "noOfCars": 4,
+    "trainTransportRange": "National"
+  }
+]

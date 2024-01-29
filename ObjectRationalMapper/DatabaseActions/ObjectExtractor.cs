@@ -59,6 +59,17 @@ public class ObjectExtractor <T>
                 {
                     value = Convert.ToDouble(value);
                 }
+                
+                if (property.PropertyType.IsEnum)
+                {
+                    try {
+                        value = Enum.Parse(property.PropertyType, value.ToString()!);
+                    }
+                    catch (Exception e) {
+                        Console.WriteLine($"Error while parsing enum: {e.Message}");
+                    }
+                }
+                
                 property.SetValue(obj, value);
             }
             result.Add(obj);

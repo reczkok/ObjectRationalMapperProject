@@ -1,4 +1,6 @@
-﻿using ObjectRationalMapper.DatabaseConnection;
+﻿using System.Reflection;
+using ObjectRationalMapper.Attributes;
+using ObjectRationalMapper.DatabaseConnection;
 
 namespace ObjectRationalMapper.DatabaseActions;
 
@@ -81,5 +83,16 @@ public static class CommandExecutor
         if (command == null) return;
         command.CommandText = query;
         command.ExecuteNonQuery();
+    }
+
+    public static void ExecuteDropTable<T>() 
+    {
+        var session = Session.GetInstance();
+        var connection = session.GetConnection();
+        var command = connection?.CreateCommand();
+        if (command == null) return;
+        var tableName = typeof(T).GetCustomAttribute<TablenameAttribute>()!.Name;
+        command.CommandText = $"DROP TABLE IF EXISTS {tableName};";
+        command.ExecuteNonQuery();    
     }
 }

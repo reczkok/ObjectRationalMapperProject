@@ -20,10 +20,15 @@ public static class TableGenerator<T>
         return id?.Name ?? "id";
     }
 
+    private static string _getFieldsAsString(FieldAttribute[] fields) {
+        var fieldsAsString = string.Join(", ", fields.Select(field => $"{field?.Name} {MapToSqlType(field?.Type ?? typeof(string))}"));
+        return fieldsAsString;
+    }
+
     private static string _getFieldsAsString(Type t)
     {
-        var fields = CustomClassMapper<T>.GetFieldAttributes(t);
-        var fieldsAsString = string.Join(", ", fields.Select(field => $"{field?.Name} {MapToSqlType(field?.Type ?? typeof(string))}"));
+        var fields = _getFields(t);
+        var fieldsAsString = _getFieldsAsString(fields!);
         return fieldsAsString;
     }
     
@@ -80,12 +85,23 @@ public static class TableGenerator<T>
         var query = new StringBuilder();
         query.Append($"CREATE TABLE IF NOT EXISTS {baseTypeName} ({baseClassId} INT NOT NULL AUTO_INCREMENT, {discriminator}, ");
         query.Append(_getFieldsAsString(baseType));
+        
+        var addedFields = new List<string>();
+        
         if (allChildren != null)
         {
             foreach (var child in allChildren)
             {
-                var childFields = _getFieldsAsString(child);
-                query.Append($", {childFields} ");
+                var childFields = CustomClassMapper<T>.GetFieldAttributes(child);
+                foreach (var field in childFields)
+                {
+                    if (addedFields.Contains(field!.Name)) {
+                        throw new Exception($"Field {field.Name} already exists in base class. Please rename it.");
+                    }
+                    
+                    query.Append($", {field!.Name} {MapToSqlType(field!.Type ?? typeof(string))}");
+                    addedFields.Add(field!.Name);
+                }
             }
         }
         query.Append($", PRIMARY KEY ({baseClassId})");
@@ -105,6 +121,7 @@ public static class TableGenerator<T>
             Type t when t == typeof(bool) => "BOOLEAN",
             Type t when t == typeof(byte) => "TINYINT",
             Type t when t == typeof(char) => "CHAR",
+            Type t when t.IsEnum => "VARCHAR(255)",
             _ => throw new NotSupportedException($"Type {propertyType.Name} is not supported"),
         };
     }

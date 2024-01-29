@@ -1,0 +1,42 @@
+﻿[
+  {
+    "id": 1,
+    "name": "Boeing 737",
+    "speed": 850,
+    "capacity": 215,
+    "wingspan": 35.79,
+    "maxRange": 5460
+  },
+  {
+    "id": 2,
+    "name": "Boeing 747",
+    "speed": 920,
+    "capacity": 660,
+    "wingspan": 68.41,
+    "maxRange": 7240
+  },
+  {
+    "id": 3,
+    "name": "Boeing 777",
+    "speed": 950,
+    "capacity": 396,
+    "wingspan": 64.80,
+    "maxRange": 11000
+  },
+  {
+    "id": 4,
+    "name": "Boeing 787",
+    "speed": 954,
+    "capacity": 335,
+    "wingspan": 60.12,
+    "maxRange": 11835
+  },
+  {
+    "id": 5,
+    "name": "Boeing 767",
+    "speed": 912,
+    "capacity": 261,
+    "wingspan": 48.51,
+    "maxRange": 9700
+  }
+]

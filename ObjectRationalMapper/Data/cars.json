@@ -1,0 +1,65 @@
+﻿[
+  {
+    "id": 1,
+    "name": "Volkswagen Golf",
+    "speed": 180,
+    "capacity": 5,
+    "carEngineType": "Petrol"
+  },
+  {
+    "id": 2,
+    "name": "Volkswagen Passat",
+    "speed": 200,
+    "capacity": 5,
+    "carEngineType": "Diesel"
+  },
+  {
+    "id": 3,
+    "name": "Opel Corsa",
+    "speed": 170,
+    "capacity": 5,
+    "carEngineType": "Petrol"
+  },
+  {
+    "id": 4,
+    "name": "Opel Astra",
+    "speed": 190,
+    "capacity": 5,
+    "carEngineType": "Diesel"
+  },
+  {
+    "id": 5,
+    "name": "Toyota Yaris",
+    "speed": 175,
+    "capacity": 5,
+    "carEngineType": "Petrol"
+  },
+  {
+    "id": 6,
+    "name": "Toyota Corolla",
+    "speed": 195,
+    "capacity": 5,
+    "carEngineType": "Diesel"
+  },
+  {
+    "id": 7,
+    "name": "Mercedes-Benz A-Class",
+    "speed": 185,
+    "capacity": 5,
+    "carEngineType": "Petrol"
+  },
+  {
+    "id": 8,
+    "name": "Mercedes-Benz E-Class",
+    "speed": 210,
+    "capacity": 5,
+    "carEngineType": "Diesel"
+  },
+  {
+    "id": 1,
+    "name": "Tesla Model S",
+    "speed": 155,
+    "capacity": 5,
+    "carEngineType": "Electric"
+  }
+]

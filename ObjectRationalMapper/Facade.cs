@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System.Globalization;
+using System.Linq.Expressions;
 using ObjectRationalMapper.DatabaseQuery;
 
 namespace ObjectRationalMapper;
@@ -7,6 +8,7 @@ public class Facade
 {
     public void ConfigureMySql(string host, string database, string user, string password)
     {
+        Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
         var session = DatabaseConnection.Session.GetInstance();
         session.Configure(host, database, user, password);
     }
@@ -29,6 +31,11 @@ public class Facade
     public void ExecuteUpdate(string query = "")
     {
         DatabaseActions.CommandExecutor.ExecuteUpdate(query);
+    }
+    
+    public void ExecuteDropTable<T>()
+    {
+        DatabaseActions.CommandExecutor.ExecuteDropTable<T>();
     }
     
     public T[] ExtractObjects<T>(string query = "")

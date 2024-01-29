@@ -1,0 +1,47 @@
+﻿[
+  {
+    "id": 1,
+    "name": "Autobus miejski",
+    "speed": 60,
+    "capacity": 50,
+    "fare": 2.50,
+    "busEngineType": "Diesel",
+    "busTransportRange": "Local"
+  },
+  {
+    "id": 2,
+    "name": "Autobus turystyczny",
+    "speed": 80,
+    "capacity": 40,
+    "fare": 5.00,
+    "busEngineType": "Diesel",
+    "busTransportRange": "National"
+  },
+  {
+    "id": 3,
+    "name": "Autobus szkolny",
+    "speed": 50,
+    "capacity": 60,
+    "fare": 0.50,
+    "busEngineType": "Petrol",
+    "busTransportRange": "Local"
+  },
+  {
+    "id": 4,
+    "name": "Autobus międzymiastowy",
+    "speed": 70,
+    "capacity": 50,
+    "fare": 4.00,
+    "busEngineType": "Diesel",
+    "busTransportRange": "Regional"
+  },
+  {
+    "id": 5,
+    "name": "Autobus dalekobieżny",
+    "speed": 90,
+    "capacity": 40,
+    "fare": 7.50,
+    "busEngineType": "Diesel",
+    "busTransportRange": "International"
+  }
+]

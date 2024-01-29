@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using System.Reflection;
+using ObjectRationalMapper.Attributes;
 
 namespace ObjectRationalMapper.Attributes;
 
@@ -20,6 +21,18 @@ public static class CustomClassMapper<T>
         }
         var parent = type.GetCustomAttribute<TablenameAttribute>()!.ParentClass;
         return parent == null ? type.GetCustomAttribute<TablenameAttribute>()!.Name : GetHierarchyTableName(parent);
+    }
+    
+    public static Type GetParentClass(Type type)
+    {
+        var parentClass = type.GetCustomAttribute<TablenameAttribute>()!.ParentClass;
+        return parentClass == null ? type : GetParentClass(parentClass);
+    }
+    
+    public static Type GetDirectParentClass(Type type)
+    {
+        var parentClass = type.GetCustomAttribute<TablenameAttribute>()!.ParentClass;
+        return parentClass ?? type;
     }
 
     public static FieldAttribute?[] GetFieldAttributes()
@@ -50,7 +63,7 @@ public static class CustomClassMapper<T>
         {
             return type.GetProperties().Select(property => property.GetCustomAttribute<FieldAttribute>()).ToArray();
         }
-        var parentClass = GetParentClass(type);
+        var parentClass = GetDirectParentClass(type);
         var parentClassAttributes = parentClass.GetProperties().Select(property => property.GetCustomAttribute<FieldAttribute>()).ToArray();
         var thisClassAttributes = type.GetProperties().Select(property => property.GetCustomAttribute<FieldAttribute>()).ToArray();
         var excludedAttributes = parentClassAttributes.Select(attribute => attribute?.Name).ToArray();
@@ -135,6 +148,15 @@ public static class CustomClassMapper<T>
             {
                 var left = Visit(binaryExpression.Left);
                 var right = Visit(binaryExpression.Right);
+
+                var properties = GetProperties(typeof(T));
+                var leftProperty = properties.FirstOrDefault(property => property.GetCustomAttribute<FieldAttribute>()!.Name == left);
+                if (leftProperty?.PropertyType.IsEnum == true)
+                {
+                    var enumValue = Enum.GetName(leftProperty.PropertyType, Convert.ToInt32(right));
+                    right = $"'{enumValue}'";
+                }
+                
                 return $"{left} {GetBinaryOperator(binaryExpression.NodeType, binaryExpression)} {right}";
             }
             case MemberExpression memberExpression:
@@ -142,6 +164,10 @@ public static class CustomClassMapper<T>
                 return fieldAttribute?.Name ?? memberExpression.Member.Name;
             case ConstantExpression constantExpression:
                 if (constantExpression.Value is string)
+                {
+                    return $"'{constantExpression.Value}'";
+                }
+                if (constantExpression.Value is Enum)
                 {
                     return $"'{constantExpression.Value}'";
                 }
@@ -153,14 +179,5 @@ public static class CustomClassMapper<T>
         }
     }
     
-    public static Type GetParentClass(Type type)
-    {
-        var parentClass = type.GetCustomAttribute<TablenameAttribute>()?.ParentClass;
-        if (parentClass != null)
-        {
-            return parentClass;
-        }
-        return type;
-    }
     
 }
